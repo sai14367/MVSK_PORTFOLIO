@@ -1134,21 +1134,34 @@ footer {
 body.editing .ed { display: inline-flex !important; }
 
 #bar {
+  display: none !important;
+}
+body.editing #bar {
+  display: flex !important;
   position: fixed;
   bottom: 24px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 99;
-  background: rgba(15, 23, 42, 0.92);
+  background: rgba(15, 23, 42, 0.95);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(56, 189, 248, 0.3);
+  border: 1px solid rgba(56, 189, 248, 0.4);
   border-radius: 999px;
   padding: 8px 18px;
-  display: flex;
   align-items: center;
   gap: 14px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
   color: #ffffff;
+}
+#editBtn {
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+}
+body.editing #editBtn {
+  opacity: 1;
+  pointer-events: auto;
+  position: static;
 }
 #bst {
   font-size: 13.5px;
@@ -1717,7 +1730,7 @@ dialog::backdrop {
 
 <footer>
   <div class="container footer-wrap">
-    <span>© 2026 Venkata Sai Kumar Masanam • Built for high performance</span>
+    <span id="ownerTrigger" style="cursor: default; user-select: none;">© 2026 Venkata Sai Kumar Masanam • Built for high performance</span>
     <span>
       <a href="https://www.linkedin.com/in/venkata-sai-kumar-masanam-56458a27b/" target="_blank" rel="noopener" style="color: #0a66c2; font-weight: 600; text-decoration: none;">LinkedIn</a> •
       <a href="https://github.com/sai14367" target="_blank" rel="noopener" style="color: var(--primary); font-weight: 600; text-decoration: none; margin-left: 6px;">GitHub</a>
@@ -1928,7 +1941,59 @@ function changed() {
   dirty = true;
   $('#bst').textContent = 'Unsaved changes';
   try { localStorage.setItem('mvk_portfolio_state', JSON.stringify(state)); } catch(e){}
-  render();
+  
+/* Owner Edit Trigger (Private for portfolio owner) */
+var clickCount = 0, clickTimer = null;
+function triggerOwnerEdit() {
+  $('#editBtn').click();
+}
+
+// 1. Secret shortcut: Ctrl + Shift + E or Cmd + Shift + E
+window.addEventListener('keydown', function(e) {
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'E' || e.key === 'e')) {
+    e.preventDefault();
+    triggerOwnerEdit();
+  }
+});
+
+// 2. Secret triple-click on footer copyright or logo dot
+var ownerTrigger = $('#ownerTrigger');
+if (ownerTrigger) {
+  ownerTrigger.addEventListener('click', function() {
+    clickCount++;
+    clearTimeout(clickTimer);
+    if (clickCount >= 3) {
+      clickCount = 0;
+      triggerOwnerEdit();
+    } else {
+      clickTimer = setTimeout(function() { clickCount = 0; }, 600);
+    }
+  });
+}
+
+var logoDot = document.querySelector('.logo-dot');
+if (logoDot) {
+  logoDot.style.cursor = 'pointer';
+  logoDot.addEventListener('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    clickCount++;
+    clearTimeout(clickTimer);
+    if (clickCount >= 3) {
+      clickCount = 0;
+      triggerOwnerEdit();
+    } else {
+      clickTimer = setTimeout(function() { clickCount = 0; }, 600);
+    }
+  });
+}
+
+// 3. URL trigger: ?edit=1 or #edit
+if (window.location.search.indexOf('edit') !== -1 || window.location.hash === '#edit') {
+  setTimeout(triggerOwnerEdit, 500);
+}
+
+render();
 }
 
 function openForm(kind, it) {
