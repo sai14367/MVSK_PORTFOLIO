@@ -1154,14 +1154,10 @@ body.editing #bar {
   color: #ffffff;
 }
 #editBtn {
-  opacity: 0;
-  pointer-events: none;
-  position: absolute;
+  display: none !important;
 }
 body.editing #editBtn {
-  opacity: 1;
-  pointer-events: auto;
-  position: static;
+  display: inline-flex !important;
 }
 #bst {
   font-size: 13.5px;
@@ -1942,58 +1938,8 @@ function changed() {
   $('#bst').textContent = 'Unsaved changes';
   try { localStorage.setItem('mvk_portfolio_state', JSON.stringify(state)); } catch(e){}
   
-/* Owner Edit Trigger (Private for portfolio owner) */
-var clickCount = 0, clickTimer = null;
-function triggerOwnerEdit() {
-  $('#editBtn').click();
-}
-
-// 1. Secret shortcut: Ctrl + Shift + E or Cmd + Shift + E
-window.addEventListener('keydown', function(e) {
-  if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'E' || e.key === 'e')) {
-    e.preventDefault();
-    triggerOwnerEdit();
-  }
-});
-
-// 2. Secret triple-click on footer copyright or logo dot
-var ownerTrigger = $('#ownerTrigger');
-if (ownerTrigger) {
-  ownerTrigger.addEventListener('click', function() {
-    clickCount++;
-    clearTimeout(clickTimer);
-    if (clickCount >= 3) {
-      clickCount = 0;
-      triggerOwnerEdit();
-    } else {
-      clickTimer = setTimeout(function() { clickCount = 0; }, 600);
-    }
-  });
-}
-
-var logoDot = document.querySelector('.logo-dot');
-if (logoDot) {
-  logoDot.style.cursor = 'pointer';
-  logoDot.addEventListener('click', function(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    clickCount++;
-    clearTimeout(clickTimer);
-    if (clickCount >= 3) {
-      clickCount = 0;
-      triggerOwnerEdit();
-    } else {
-      clickTimer = setTimeout(function() { clickCount = 0; }, 600);
-    }
-  });
-}
-
-// 3. URL trigger: ?edit=1 or #edit
-if (window.location.search.indexOf('edit') !== -1 || window.location.hash === '#edit') {
-  setTimeout(triggerOwnerEdit, 500);
-}
-
 render();
+
 }
 
 function openForm(kind, it) {
@@ -2196,6 +2142,64 @@ $('#f').addEventListener('submit', function(ev) {
 });
 
 render();
+
+/* Owner Edit Controls (Completely hidden from public visitors) */
+function triggerOwnerEdit() {
+  pin.value = ''; pm.textContent = '';
+  if(state.ph) {
+    pset = false; $('#pt').textContent = 'Enter passcode'; $('#pgo').textContent = 'Unlock editing'; $('#preset').hidden = false;
+  } else {
+    pset = true; $('#pt').textContent = 'Create a passcode'; $('#pgo').textContent = 'Save passcode'; $('#preset').hidden = true;
+    pm.textContent = 'Choose at least 6 characters. You will need it each time you edit.';
+  }
+  pd.showModal();
+}
+
+// Shortcut: Ctrl + Shift + E (or Cmd + Shift + E)
+window.addEventListener('keydown', function(e) {
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'E' || e.key === 'e')) {
+    e.preventDefault();
+    triggerOwnerEdit();
+  }
+});
+
+// Triple-click on footer copyright or logo dot
+var clickCount = 0, clickTimer = null;
+var ownerTrigger = $('#ownerTrigger');
+if (ownerTrigger) {
+  ownerTrigger.addEventListener('click', function() {
+    clickCount++;
+    clearTimeout(clickTimer);
+    if (clickCount >= 3) {
+      clickCount = 0;
+      triggerOwnerEdit();
+    } else {
+      clickTimer = setTimeout(function() { clickCount = 0; }, 600);
+    }
+  });
+}
+
+var logoDot = document.querySelector('.logo-dot');
+if (logoDot) {
+  logoDot.style.cursor = 'pointer';
+  logoDot.addEventListener('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    clickCount++;
+    clearTimeout(clickTimer);
+    if (clickCount >= 3) {
+      clickCount = 0;
+      triggerOwnerEdit();
+    } else {
+      clickTimer = setTimeout(function() { clickCount = 0; }, 600);
+    }
+  });
+}
+
+// URL trigger: append ?edit=1 or #edit to URL
+if (window.location.search.indexOf('edit') !== -1 || window.location.hash === '#edit') {
+  setTimeout(triggerOwnerEdit, 400);
+}
 
 /* Rotating Roles */
 var roles = ['full-stack systems', 'computer-vision applications', 'Spring Boot & React apps', 'hackathon prototypes'], ri = 0, rot = $('#rot');
